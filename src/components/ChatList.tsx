@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pin, Volume2, VolumeX, Archive, MessageCircle, Users, Check, CheckCheck } from 'lucide-react';
+import { Pin, Volume2, VolumeX, Archive, MessageCircle, Users, Check, CheckCheck, MoreVertical, Star, Shield } from 'lucide-react';
 import { Chat } from '../types';
+import '../styles/ChatList.css';
 
 interface ChatListProps {
   chats: Chat[];
@@ -56,6 +57,50 @@ export const ChatList: React.FC<ChatListProps> = ({
 
   return (
     <div className="chat-list">
+      <div className="chat-list-header">
+        <div className="chat-list-title">
+          <h3>Messages</h3>
+          <span className="chat-count">{chats.length}</span>
+        </div>
+        <div className="chat-filters">
+          <button className="filter-tab active">All</button>
+          <button className="filter-tab">Unread</button>
+          <button className="filter-tab">Groups</button>
+        </div>
+      </div>
+      
+      <div className="chat-items-container">
+        {/* Pinned Section */}
+        {sortedChats.some(chat => chat.isPinned) && (
+          <div className="chat-section">
+            <div className="chat-section-header">
+              <div className="section-title">
+                <Pin size={12} className="section-icon" />
+                Pinned
+              </div>
+              <span className="section-count">
+                {sortedChats.filter(chat => chat.isPinned).length}
+              </span>
+            </div>
+            {sortedChats.filter(chat => chat.isPinned).map(chat => renderChatItem(chat))}
+          </div>
+        )}
+        
+        {/* Recent Section */}
+        <div className="chat-section">
+          <div className="chat-section-header">
+            <div className="section-title">
+              <MessageCircle size={12} className="section-icon" />
+              Recent
+            </div>
+            <span className="section-count">
+              {sortedChats.filter(chat => !chat.isPinned).length}
+            </span>
+          </div>
+          {sortedChats.filter(chat => !chat.isPinned).map(chat => renderChatItem(chat))}
+        </div>
+      </div>
+      
       {sortedChats.map((chat) => (
         <div
           key={chat.id}
@@ -158,4 +203,120 @@ export const ChatList: React.FC<ChatListProps> = ({
       )}
     </div>
   );
+  
+  function renderChatItem(chat: Chat) {
+    return (
+      <div
+        key={chat.id}
+        className={`chat-item ${currentChat === chat.id ? 'active' : ''} ${
+          chat.unreadCount > 0 ? 'unread' : ''
+        } ${chat.isPinned ? 'pinned' : ''}`}
+        onClick={() => onSelectChat(chat.id)}
+      >
+        <div className="chat-avatar-container">
+          <img src={chat.avatar} alt={chat.name} className="chat-avatar" />
+          {chat.type === 'direct' && (
+            <div className={`status-indicator ${onlineUsers.has(chat.id) ? 'online' : 'offline'}`} />
+          )}
+          {chat.type === 'group' && (
+            <div className="group-indicator">
+              <Users size={10} />
+            </div>
+          )}
+        </div>
+        
+        <div className="chat-content">
+          <div className="chat-header">
+            <div className="chat-name-container">
+              <h3 className="chat-name">
+                {highlightText(chat.name, searchQuery)}
+              </h3>
+              <div className="chat-indicators">
+                {chat.isPinned && <Pin size={12} className="pin-icon" />}
+                {chat.isMuted && <VolumeX size={12} className="mute-icon" />}
+                {chat.isArchived && <Archive size={12} className="archive-icon" />}
+                {chat.type === 'group' && chat.name.includes('Team') && (
+                  <Shield size={12} className="verified-badge" />
+                )}
+              </div>
+            </div>
+            <div className="chat-time">
+              {chat.lastMessage && formatTime(chat.lastMessage.timestamp)}
+            </div>
+          </div>
+          
+          <div className="chat-preview">
+            <div className="last-message">
+              {chat.isTyping ? (
+                <div className="typing-indicator">
+                  <div className="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                  typing...
+                </div>
+              ) : (
+                <span className="message-content">
+                  {chat.lastMessage?.isOwn && (
+                    <span className={`message-status ${chat.lastMessage.isRead ? 'read' : 'sent'}`}>
+                      {chat.lastMessage.isRead ? (
+                        <CheckCheck size={14} />
+                      ) : (
+                        <Check size={14} />
+                      )}
+                    </span>
+                  )}
+                  {chat.lastMessage?.type === 'text' && (
+                    highlightText(
+                      chat.lastMessage.content.length > 40 
+                        ? chat.lastMessage.content.substring(0, 40) + '...'
+                        : chat.lastMessage.content,
+                      searchQuery
+                    )
+                  )}
+                  {chat.lastMessage?.type === 'image' && (
+                    <span className="media-message">
+                      📷 Photo
+                    </span>
+                  )}
+                  {chat.lastMessage?.type === 'file' && (
+                    <span className="media-message">
+                      📎 File
+                    </span>
+                  )}
+                  {!chat.lastMessage && (
+                    <span className="no-messages">No messages yet</span>
+                  )}
+                </span>
+              )}
+            </div>
+            
+            <div className="chat-meta">
+              {chat.unreadCount > 0 && (
+                <div className={`unread-badge ${chat.unreadCount > 99 ? 'high-priority' : ''}`}>
+                  {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                </div>
+              )}
+              {chat.isTyping && (
+                <div className="typing-indicator">
+                  <div className="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="chat-context-menu">
+          <button className="context-menu-trigger">
+            <MoreVertical size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Moon, Sun, Bell, Lock, Globe, Palette, Download, Shield, HelpCircle, Info } from 'lucide-react';
+import { X, Moon, Sun, Bell, Lock, Globe, Palette, Download, Shield, HelpCircle, Info, User, Smartphone, Database, Zap } from 'lucide-react';
 import { User } from '../types';
+import '../styles/ProfileSettings.css';
 
 interface SettingsModalProps {
   currentUser: User;
@@ -32,12 +33,86 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   });
 
   const tabs = [
+    { id: 'account', label: 'Account', icon: <User size={16} /> },
     { id: 'general', label: 'General', icon: <Globe size={16} /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell size={16} /> },
     { id: 'privacy', label: 'Privacy', icon: <Lock size={16} /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
+    { id: 'advanced', label: 'Advanced', icon: <Zap size={16} /> },
+    { id: 'data', label: 'Data & Storage', icon: <Database size={16} /> },
     { id: 'about', label: 'About', icon: <Info size={16} /> }
   ];
+
+  const renderAccountSettings = () => (
+    <div className="settings-section">
+      <h3>Account Settings</h3>
+      
+      <div className="setting-group">
+        <label>Profile Information</label>
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Display Name</label>
+            <p>Your name as it appears to other users</p>
+          </div>
+          <input 
+            type="text" 
+            value={currentUser.name} 
+            className="profile-input"
+            style={{ width: '200px' }}
+          />
+        </div>
+      </div>
+      
+      <div className="setting-group">
+        <label>Account Security</label>
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Two-factor authentication</label>
+            <p>Add an extra layer of security to your account</p>
+          </div>
+          <button className="theme-toggle">
+            <Shield size={16} />
+            Enable 2FA
+          </button>
+        </div>
+        
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Change Password</label>
+            <p>Update your account password</p>
+          </div>
+          <button className="theme-toggle">
+            <Lock size={16} />
+            Change
+          </button>
+        </div>
+      </div>
+      
+      <div className="setting-group">
+        <label>Account Actions</label>
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Download your data</label>
+            <p>Get a copy of your messages and media</p>
+          </div>
+          <button className="theme-toggle">
+            <Download size={16} />
+            Download
+          </button>
+        </div>
+        
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Deactivate account</label>
+            <p>Temporarily disable your account</p>
+          </div>
+          <button className="theme-toggle" style={{ color: 'var(--error-500)' }}>
+            Deactivate
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   const renderGeneralSettings = () => (
     <div className="settings-section">
@@ -50,6 +125,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <option value="es">Spanish</option>
           <option value="fr">French</option>
           <option value="de">German</option>
+        </select>
+      </div>
+      
+      <div className="setting-group">
+        <label>Regional Settings</label>
+        <select className="setting-select">
+          <option value="auto">Auto-detect</option>
+          <option value="US">United States</option>
+          <option value="UK">United Kingdom</option>
+          <option value="CA">Canada</option>
+        </select>
+      </div>
+      
+      <div className="setting-group">
+        <label>Time Format</label>
+        <select className="setting-select">
+          <option value="12">12-hour</option>
+          <option value="24">24-hour</option>
         </select>
       </div>
       
@@ -72,8 +165,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       
       <div className="setting-item">
         <div className="setting-info">
+          <label>Auto-download media</label>
+          <p>Automatically download images and videos</p>
+        </div>
+        <input type="checkbox" className="setting-checkbox" defaultChecked />
+      </div>
+      
+      <div className="setting-item">
+        <div className="setting-info">
           <label>Show media in chat</label>
           <p>Automatically display images and videos</p>
+        </div>
+        <input type="checkbox" className="setting-checkbox" defaultChecked />
+      </div>
+      
+      <div className="setting-item">
+        <div className="setting-info">
+          <label>Spell check</label>
+          <p>Check spelling as you type</p>
         </div>
         <input type="checkbox" className="setting-checkbox" defaultChecked />
       </div>
@@ -196,6 +305,116 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     </div>
   );
 
+  const renderAdvancedSettings = () => (
+    <div className="settings-section">
+      <h3>Advanced Settings</h3>
+      
+      <div className="setting-item">
+        <div className="setting-info">
+          <label>Hardware acceleration</label>
+          <p>Use GPU acceleration for better performance</p>
+        </div>
+        <input type="checkbox" className="setting-checkbox" defaultChecked />
+      </div>
+      
+      <div className="setting-item">
+        <div className="setting-info">
+          <label>Developer mode</label>
+          <p>Enable advanced debugging features</p>
+        </div>
+        <input type="checkbox" className="setting-checkbox" />
+      </div>
+      
+      <div className="setting-item">
+        <div className="setting-info">
+          <label>Beta features</label>
+          <p>Get early access to new features</p>
+        </div>
+        <input type="checkbox" className="setting-checkbox" />
+      </div>
+      
+      <div className="setting-group">
+        <label>Performance</label>
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Animation quality</label>
+            <p>Adjust animation smoothness</p>
+          </div>
+          <select className="setting-select">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="off">Disabled</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDataSettings = () => (
+    <div className="settings-section">
+      <h3>Data & Storage</h3>
+      
+      <div className="setting-group">
+        <label>Storage Usage</label>
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Messages</label>
+            <p>2.3 GB used</p>
+          </div>
+          <button className="theme-toggle">
+            Clear Cache
+          </button>
+        </div>
+        
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Media files</label>
+            <p>1.8 GB used</p>
+          </div>
+          <button className="theme-toggle">
+            Manage
+          </button>
+        </div>
+      </div>
+      
+      <div className="setting-item">
+        <div className="setting-info">
+          <label>Auto-delete old messages</label>
+          <p>Automatically delete messages older than 30 days</p>
+        </div>
+        <input type="checkbox" className="setting-checkbox" />
+      </div>
+      
+      <div className="setting-item">
+        <div className="setting-info">
+          <label>Compress media uploads</label>
+          <p>Reduce file sizes to save bandwidth</p>
+        </div>
+        <input type="checkbox" className="setting-checkbox" defaultChecked />
+      </div>
+      
+      <div className="setting-group">
+        <label>Backup & Sync</label>
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Cloud backup</label>
+            <p>Backup your messages to the cloud</p>
+          </div>
+          <input type="checkbox" className="setting-checkbox" defaultChecked />
+        </div>
+        
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Sync across devices</label>
+            <p>Keep messages in sync on all your devices</p>
+          </div>
+          <input type="checkbox" className="setting-checkbox" defaultChecked />
+        </div>
+      </div>
+    </div>
+  );
+
   const renderAppearanceSettings = () => (
     <div className="settings-section">
       <h3>Appearance Settings</h3>
@@ -209,6 +428,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
         </button>
+      </div>
+      
+      <div className="setting-group">
+        <label>Message Display</label>
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Message bubbles</label>
+            <p>Show messages in chat bubbles</p>
+          </div>
+          <input type="checkbox" className="setting-checkbox" defaultChecked />
+        </div>
+        
+        <div className="setting-item">
+          <div className="setting-info">
+            <label>Show avatars</label>
+            <p>Display profile pictures in conversations</p>
+          </div>
+          <input type="checkbox" className="setting-checkbox" defaultChecked />
+        </div>
       </div>
       
       <div className="setting-group">
@@ -227,6 +465,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <span>Pattern 2</span>
           </div>
         </div>
+      </div>
+      
+      <div className="setting-item">
+        <div className="setting-info">
+          <label>Sidebar position</label>
+          <p>Choose sidebar layout</p>
+        </div>
+        <select className="setting-select">
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
       </div>
       
       <div className="setting-item">
@@ -255,8 +504,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         
         <div className="about-stats">
           <div className="stat-item">
-            <span className="stat-value">50+</span>
-            <span className="stat-label">Features</span>
+            <span className="stat-value">1M+</span>
+            <span className="stat-label">Users</span>
           </div>
           <div className="stat-item">
             <span className="stat-value">99.9%</span>
@@ -266,9 +515,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <span className="stat-value">24/7</span>
             <span className="stat-label">Support</span>
           </div>
+          <div className="stat-item">
+            <span className="stat-value">150+</span>
+            <span className="stat-label">Countries</span>
+          </div>
+        </div>
+        
+        <div className="about-stats">
+          <div className="stat-item">
+            <span className="stat-value">50+</span>
+            <span className="stat-label">Features</span>
+          </div>
         </div>
         
         <div className="about-links">
+          <a href="#" className="about-link">
+            <Smartphone size={16} />
+            Mobile Apps
+          </a>
           <a href="#" className="about-link">
             <HelpCircle size={16} />
             Help Center
@@ -316,10 +580,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
           
           <div className="settings-content">
+            {activeTab === 'account' && renderAccountSettings()}
             {activeTab === 'general' && renderGeneralSettings()}
             {activeTab === 'notifications' && renderNotificationSettings()}
             {activeTab === 'privacy' && renderPrivacySettings()}
             {activeTab === 'appearance' && renderAppearanceSettings()}
+            {activeTab === 'advanced' && renderAdvancedSettings()}
+            {activeTab === 'data' && renderDataSettings()}
             {activeTab === 'about' && renderAboutSettings()}
           </div>
         </div>

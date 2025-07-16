@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Edit3, Save, Camera, Phone, Mail, Calendar, MessageCircle } from 'lucide-react';
+import { X, Edit3, Save, Camera, Phone, Mail, Calendar, MessageCircle, MapPin, Globe, Award } from 'lucide-react';
 import { User } from '../types';
+import '../styles/ProfileSettings.css';
 
 interface UserProfileProps {
   user: User;
@@ -83,10 +84,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onUpdat
                   onChange={(e) => setEditedUser({ ...editedUser, bio: e.target.value })}
                   className="profile-input"
                   rows={3}
+                  placeholder="Tell us about yourself..."
                 />
               ) : (
-                <span className="profile-value">{user.bio}</span>
+                <span className="profile-value">{user.bio || 'No bio available'}</span>
               )}
+            </div>
+            
+            <div className="profile-field">
+              <label>Location</label>
+              <div className="field-with-icon">
+                <MapPin size={16} />
+                <span className="profile-value">San Francisco, CA</span>
+              </div>
+            </div>
+            
+            <div className="profile-field">
+              <label>Website</label>
+              <div className="field-with-icon">
+                <Globe size={16} />
+                <span className="profile-value">www.example.com</span>
+              </div>
             </div>
             
             <div className="profile-field">
@@ -108,13 +126,23 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onUpdat
             <div className="profile-field">
               <label>Member Since</label>
               <div className="field-with-icon">
-                <Calendar size={16} />
+                <Award size={16} />
                 <span className="profile-value">
                   {user.joinedDate.toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                   })}
+                </span>
+              </div>
+            </div>
+            
+            <div className="profile-field">
+              <label>Activity Status</label>
+              <div className="field-with-icon">
+                <Calendar size={16} />
+                <span className="profile-value">
+                  Last active {formatLastSeen(new Date(Date.now() - 300000))}
                 </span>
               </div>
             </div>
@@ -142,4 +170,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, onUpdat
       </div>
     </div>
   );
+  
+  function formatLastSeen(date: Date) {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  }
 };
