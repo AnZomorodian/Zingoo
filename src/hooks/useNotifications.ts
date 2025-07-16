@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Notification, NotificationAction } from '../types';
+import { Notification as AppNotification, NotificationAction } from '../types';
 
 export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [permission, setPermission] = useState<NotificationPermission>('default');
 
   useEffect(() => {
@@ -41,8 +41,8 @@ export const useNotifications = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
-    const newNotification: Notification = {
+  const addNotification = useCallback((notification: Omit<AppNotification, 'id'>) => {
+    const newNotification: AppNotification = {
       ...notification,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
     };
@@ -102,11 +102,11 @@ export const useNotifications = () => {
     return notifications.filter(n => !n.isRead).length;
   }, [notifications]);
 
-  const getNotificationsByType = useCallback((type: Notification['type']) => {
+  const getNotificationsByType = useCallback((type: AppNotification['type']) => {
     return notifications.filter(n => n.type === type);
   }, [notifications]);
 
-  const playNotificationSound = useCallback((type: Notification['type']) => {
+  const playNotificationSound = useCallback((type: AppNotification['type']) => {
     try {
       const audio = new Audio();
       switch (type) {
@@ -134,7 +134,7 @@ export const useNotifications = () => {
     }
   }, []);
 
-  const scheduleNotification = useCallback((notification: Omit<Notification, 'id'>, delay: number) => {
+  const scheduleNotification = useCallback((notification: Omit<AppNotification, 'id'>, delay: number) => {
     setTimeout(() => {
       addNotification(notification);
     }, delay);
