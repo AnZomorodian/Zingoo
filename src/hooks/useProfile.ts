@@ -82,7 +82,24 @@ const defaultProfile: User = {
 export const useProfile = () => {
   const [profile, setProfile] = useState<User>(() => {
     const saved = localStorage.getItem('messenger-profile');
-    return saved ? { ...defaultProfile, ...JSON.parse(saved) } : defaultProfile;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...defaultProfile,
+        ...parsed,
+        joinedDate: new Date(parsed.joinedDate || defaultProfile.joinedDate),
+        lastSeen: new Date(parsed.lastSeen || defaultProfile.lastSeen),
+        status: {
+          ...parsed.status,
+          expiresAt: parsed.status?.expiresAt ? new Date(parsed.status.expiresAt) : undefined
+        },
+        achievements: (parsed.achievements || []).map((achievement: any) => ({
+          ...achievement,
+          unlockedAt: new Date(achievement.unlockedAt)
+        }))
+      };
+    }
+    return defaultProfile;
   });
 
   const [profileStats, setProfileStats] = useState<ProfileStats>({
