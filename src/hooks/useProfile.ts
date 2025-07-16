@@ -79,25 +79,61 @@ const defaultProfile: User = {
   }
 };
 
+const safeParseDate = (dateValue: any): Date => {
+  if (!dateValue) return new Date();
+  if (dateValue instanceof Date) return dateValue;
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
 export const useProfile = () => {
   const [profile, setProfile] = useState<User>(() => {
-    const saved = localStorage.getItem('messenger-profile');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return {
-        ...defaultProfile,
-        ...parsed,
-        joinedDate: new Date(parsed.joinedDate || defaultProfile.joinedDate),
-        lastSeen: new Date(parsed.lastSeen || defaultProfile.lastSeen),
-        status: {
-          ...parsed.status,
-          expiresAt: parsed.status?.expiresAt ? new Date(parsed.status.expiresAt) : undefined
-        },
-        achievements: (parsed.achievements || []).map((achievement: any) => ({
-          ...achievement,
-          unlockedAt: new Date(achievement.unlockedAt)
-        }))
-      };
+    try {
+      const saved = localStorage.getItem('messenger-profile');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...defaultProfile,
+          ...parsed,
+          joinedDate: safeParseDate(parsed.joinedDate),
+          lastSeen: safeParseDate(parsed.lastSeen),
+          status: {
+            ...defaultProfile.status,
+            ...parsed.status,
+            expiresAt: parsed.status?.expiresAt ? safeParseDate(parsed.status.expiresAt) : undefined
+          },
+          achievements: (parsed.achievements || []).map((achievement: any) => ({
+            ...achievement,
+            unlockedAt: safeParseDate(achievement.unlockedAt)
+          })),
+          theme: {
+            ...defaultProfile.theme,
+            ...parsed.theme
+          },
+          privacy: {
+            ...defaultProfile.privacy,
+            ...parsed.privacy
+          },
+          notifications: {
+            ...defaultProfile.notifications,
+            ...parsed.notifications,
+            quietHours: {
+              ...defaultProfile.notifications.quietHours,
+              ...parsed.notifications?.quietHours
+            }
+          },
+          customization: {
+            ...defaultProfile.customization,
+            ...parsed.customization
+          },
+          preferences: {
+            ...defaultProfile.preferences,
+            ...parsed.preferences
+          }
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to load profile from localStorage:', error);
     }
     return defaultProfile;
   });
@@ -117,51 +153,59 @@ export const useProfile = () => {
 
   // Save profile to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('messenger-profile', JSON.stringify(profile));
-    
-    // Update document title and favicon based on profile
-    document.title = `${profile.name} - Messenger`;
-    
-    // Update CSS custom properties for theme
-    const root = document.documentElement;
-    root.style.setProperty('--user-primary-color', profile.theme.primaryColor);
-    root.style.setProperty('--user-accent-color', profile.theme.accentColor);
-    
-    // Calculate stats
-    calculateProfileStats();
+    try {
+      localStorage.setItem('messenger-profile', JSON.stringify(profile));
+      
+      // Update document title and favicon based on profile
+      document.title = `${profile.name} - Zingoo Messenger`;
+      
+      // Update CSS custom properties for theme
+      const root = document.documentElement;
+      root.style.setProperty('--user-primary-color', profile.theme.primaryColor);
+      root.style.setProperty('--user-accent-color', profile.theme.accentColor);
+      
+      // Calculate stats
+      calculateProfileStats();
+    } catch (error) {
+      console.warn('Failed to save profile to localStorage:', error);
+    }
   }, [profile]);
 
   const calculateProfileStats = useCallback(() => {
-    const joinedDaysAgo = Math.floor((new Date().getTime() - profile.joinedDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Simulate stats calculation (in real app, this would come from backend)
-    const stats: ProfileStats = {
-      totalMessages: Math.floor(Math.random() * 5000) + 1000,
-      totalChats: Math.floor(Math.random() * 50) + 10,
-      totalCalls: Math.floor(Math.random() * 100) + 20,
-      totalFiles: Math.floor(Math.random() * 200) + 50,
-      averageResponseTime: Math.floor(Math.random() * 300) + 60, // seconds
-      mostActiveDay: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][Math.floor(Math.random() * 7)],
-      joinedDaysAgo,
-      favoriteEmojis: [
-        { emoji: '😊', count: 45 },
-        { emoji: '👍', count: 32 },
-        { emoji: '❤️', count: 28 },
-        { emoji: '😂', count: 25 },
-        { emoji: '🔥', count: 18 }
-      ],
-      chatDistribution: [
-        { type: 'Direct', count: 35 },
-        { type: 'Groups', count: 12 },
-        { type: 'Channels', count: 3 }
-      ],
-      activityHeatmap: Array.from({ length: 24 }, (_, hour) => ({
-        hour,
-        activity: Math.floor(Math.random() * 100)
-      }))
-    };
-    
-    setProfileStats(stats);
+    try {
+      const joinedDaysAgo = Math.floor((new Date().getTime() - profile.joinedDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Simulate stats calculation (in real app, this would come from backend)
+      const stats: ProfileStats = {
+        totalMessages: Math.floor(Math.random() * 5000) + 1000,
+        totalChats: Math.floor(Math.random() * 50) + 10,
+        totalCalls: Math.floor(Math.random() * 100) + 20,
+        totalFiles: Math.floor(Math.random() * 200) + 50,
+        averageResponseTime: Math.floor(Math.random() * 300) + 60, // seconds
+        mostActiveDay: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][Math.floor(Math.random() * 7)],
+        joinedDaysAgo,
+        favoriteEmojis: [
+          { emoji: '😊', count: 45 },
+          { emoji: '👍', count: 32 },
+          { emoji: '❤️', count: 28 },
+          { emoji: '😂', count: 25 },
+          { emoji: '🔥', count: 18 }
+        ],
+        chatDistribution: [
+          { type: 'Direct', count: 35 },
+          { type: 'Groups', count: 12 },
+          { type: 'Channels', count: 3 }
+        ],
+        activityHeatmap: Array.from({ length: 24 }, (_, hour) => ({
+          hour,
+          activity: Math.floor(Math.random() * 100)
+        }))
+      };
+      
+      setProfileStats(stats);
+    } catch (error) {
+      console.warn('Failed to calculate profile stats:', error);
+    }
   }, [profile.joinedDate]);
 
   const updateProfile = useCallback((updates: Partial<User>) => {
@@ -264,22 +308,26 @@ export const useProfile = () => {
   const getProfileStats = useCallback(() => profileStats, [profileStats]);
 
   const exportProfile = useCallback(() => {
-    const exportData = {
-      profile,
-      stats: profileStats,
-      exportedAt: new Date().toISOString(),
-      version: '1.0'
-    };
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${profile.name.replace(/\s+/g, '_')}_profile_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const exportData = {
+        profile,
+        stats: profileStats,
+        exportedAt: new Date().toISOString(),
+        version: '1.0'
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${profile.name.replace(/\s+/g, '_')}_profile_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export profile:', error);
+    }
   }, [profile, profileStats]);
 
   const importProfile = useCallback((file: File) => {
@@ -292,7 +340,9 @@ export const useProfile = () => {
             setProfile(prev => ({
               ...prev,
               ...importData.profile,
-              id: prev.id // Keep current user ID
+              id: prev.id, // Keep current user ID
+              joinedDate: safeParseDate(importData.profile.joinedDate),
+              lastSeen: safeParseDate(importData.profile.lastSeen)
             }));
             resolve();
           } else {

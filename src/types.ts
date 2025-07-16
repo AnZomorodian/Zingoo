@@ -168,13 +168,6 @@ export interface ChatPermissions {
   canCreatePolls: boolean;
 }
 
-export interface ChatFilter {
-  type: 'all' | 'unread' | 'groups' | 'archived' | 'favorites' | 'bots';
-  searchQuery: string;
-  tags: string[];
-  dateRange?: { start: Date; end: Date };
-}
-
 export interface NotificationSettings {
   sounds: boolean;
   desktop: boolean;
@@ -214,75 +207,6 @@ export interface PrivacySettings {
   sessionTimeout: number;
 }
 
-export interface AppSettings {
-  theme: 'light' | 'dark' | 'system';
-  language: string;
-  fontSize: 'small' | 'medium' | 'large';
-  notifications: NotificationSettings;
-  privacy: PrivacySettings;
-  autoDownload: AutoDownloadSettings;
-  chatWallpaper: string;
-  enterToSend: boolean;
-  showMediaInGallery: boolean;
-  dataUsage: DataUsageSettings;
-  accessibility: AccessibilitySettings;
-  advanced: AdvancedSettings;
-}
-
-export interface AutoDownloadSettings {
-  photos: 'always' | 'wifi' | 'never';
-  videos: 'always' | 'wifi' | 'never';
-  files: 'always' | 'wifi' | 'never';
-  voiceMessages: 'always' | 'wifi' | 'never';
-  maxFileSize: number;
-}
-
-export interface DataUsageSettings {
-  lowDataMode: boolean;
-  compressImages: boolean;
-  compressVideos: boolean;
-  preloadMessages: boolean;
-  syncFrequency: 'realtime' | 'frequent' | 'normal' | 'battery';
-}
-
-export interface AccessibilitySettings {
-  highContrast: boolean;
-  largeText: boolean;
-  reduceMotion: boolean;
-  screenReader: boolean;
-  keyboardNavigation: boolean;
-  colorBlindSupport: boolean;
-}
-
-export interface AdvancedSettings {
-  developerMode: boolean;
-  debugLogging: boolean;
-  experimentalFeatures: boolean;
-  customCSS: string;
-  apiEndpoint: string;
-  cacheSize: number;
-  maxBackupSize: number;
-}
-
-export interface EmojiCategory {
-  id: string;
-  name: string;
-  icon: string;
-  emojis: string[];
-}
-
-export interface FileAttachment {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  url: string;
-  thumbnail?: string;
-  uploadProgress?: number;
-  isUploading?: boolean;
-  error?: string;
-}
-
 export interface CallSession {
   id: string;
   chatId: string;
@@ -297,20 +221,7 @@ export interface CallSession {
   recordingUrl?: string;
 }
 
-export interface TypingIndicator {
-  userId: string;
-  chatId: string;
-  timestamp: Date;
-}
-
-export interface OnlineStatus {
-  userId: string;
-  isOnline: boolean;
-  lastSeen: Date;
-  activity: 'active' | 'idle' | 'away';
-}
-
-export interface Notification {
+export interface AppNotification {
   id: string;
   type: 'message' | 'call' | 'mention' | 'reaction' | 'system' | 'update' | 'reminder' | 'achievement';
   title: string;
@@ -330,129 +241,6 @@ export interface NotificationAction {
   style: 'default' | 'primary' | 'destructive';
 }
 
-export interface UserActivity {
-  userId: string;
-  type: 'message' | 'call' | 'login' | 'logout' | 'status_change' | 'profile_update';
-  timestamp: Date;
-  details: any;
-  ipAddress?: string;
-  userAgent?: string;
-  location?: string;
-}
-
-export interface ChatAnalytics {
-  chatId: string;
-  messageCount: number;
-  participantCount: number;
-  averageResponseTime: number;
-  mostActiveHours: number[];
-  mostUsedEmojis: Array<{ emoji: string; count: number }>;
-  wordCloud: Array<{ word: string; frequency: number }>;
-  sentimentAnalysis: {
-    positive: number;
-    neutral: number;
-    negative: number;
-  };
-  mediaShared: {
-    images: number;
-    videos: number;
-    files: number;
-    voice: number;
-  };
-  topParticipants: Array<{ userId: string; messageCount: number }>;
-}
-
-export interface MessageTemplate {
-  id: string;
-  name: string;
-  content: string;
-  category: string;
-  isCustom: boolean;
-  usageCount: number;
-  createdAt: Date;
-  tags: string[];
-}
-
-export interface QuickAction {
-  id: string;
-  name: string;
-  icon: string;
-  action: string;
-  shortcut?: string;
-  isEnabled: boolean;
-  category: string;
-}
-
-export interface BackupData {
-  version: string;
-  timestamp: Date;
-  profile: User;
-  chats: Chat[];
-  messages: Record<string, Message[]>;
-  settings: AppSettings;
-  customizations: any;
-}
-
-export interface SearchResult {
-  type: 'chat' | 'message' | 'contact';
-  id: string;
-  title: string;
-  subtitle: string;
-  avatar?: string;
-  timestamp?: Date;
-  relevance: number;
-  context?: string;
-}
-
-export interface VoiceNote {
-  id: string;
-  duration: number;
-  waveform: number[];
-  transcript?: string;
-  isTranscribing?: boolean;
-  quality: 'low' | 'medium' | 'high';
-}
-
-export interface LocationData {
-  latitude: number;
-  longitude: number;
-  address: string;
-  accuracy: number;
-  timestamp: Date;
-}
-
-export interface ContactData {
-  name: string;
-  phoneNumbers: string[];
-  emails: string[];
-  avatar?: string;
-  organization?: string;
-}
-
-export interface StickerPack {
-  id: string;
-  name: string;
-  author: string;
-  thumbnail: string;
-  stickers: Sticker[];
-  isInstalled: boolean;
-  isPremium: boolean;
-  downloadCount: number;
-  rating: number;
-}
-
-export interface Sticker {
-  id: string;
-  url: string;
-  emoji: string;
-  keywords: string[];
-}
-
-export interface CallType {
-  VOICE: 'voice';
-  VIDEO: 'video';
-}
-
 export interface ProfileStats {
   totalMessages: number;
   totalChats: number;
@@ -464,4 +252,9 @@ export interface ProfileStats {
   favoriteEmojis: Array<{ emoji: string; count: number }>;
   chatDistribution: Array<{ type: string; count: number }>;
   activityHeatmap: Array<{ hour: number; activity: number }>;
+}
+
+export interface CallType {
+  VOICE: 'voice';
+  VIDEO: 'video';
 }
