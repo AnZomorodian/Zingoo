@@ -2,58 +2,42 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, Send, Phone, Video, Settings, Sun, Moon, 
   MessageCircle, Check, CheckCheck, Smile, Paperclip, 
-  Image, Mic, MoreVertical, Bell, BellOff, Users
+  Image, Mic, MoreVertical, Bell, BellOff, Users, User,
+  Plus, Archive, Pin, VolumeX, Edit3, Trash2, Star
 } from 'lucide-react';
+import { ChatList } from '../components/ChatList';
+import { ChatArea } from '../components/ChatArea';
+import { MessageInput } from '../components/MessageInput';
+import { EmojiPicker } from '../components/EmojiPicker';
+import { MediaViewer } from '../components/MediaViewer';
+import { UserProfile } from '../components/UserProfile';
+import { SettingsModal } from '../components/SettingsModal';
+import { ThemeCustomizer } from '../components/ThemeCustomizer';
+import { User as UserType, Message, Chat, MessageReaction } from '../types';
 import './App.css';
 
-interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  status: 'online' | 'away' | 'busy' | 'offline';
-  lastSeen: Date;
-}
-
-interface Message {
-  id: string;
-  content: string;
-  sender: string;
-  timestamp: Date;
-  isOwn: boolean;
-  isRead: boolean;
-  reactions?: Array<{ emoji: string; count: number; users: string[] }>;
-}
-
-interface Chat {
-  id: string;
-  name: string;
-  avatar: string;
-  type: 'direct' | 'group';
-  participants: string[];
-  lastMessage: Message | null;
-  unreadCount: number;
-  isOnline: boolean;
-  isMuted: boolean;
-  isTyping?: boolean;
-}
-
 function App() {
-  // Theme state
+  // Theme state with system preference detection
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved as 'light' | 'dark') || 'light';
+    const saved = localStorage.getItem('messenger-theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return (saved as 'light' | 'dark') || (systemPrefersDark ? 'dark' : 'light');
   });
 
   // App state
-  const [currentUser] = useState<User>({
+  const [currentUser] = useState<UserType>({
     id: 'user1',
     name: 'Alex Johnson',
     avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-    status: 'online',
-    lastSeen: new Date()
+    status: 'Available for chat',
+    bio: 'Product Designer passionate about creating beautiful user experiences',
+    email: 'alex.johnson@example.com',
+    phone: '+1 (555) 123-4567',
+    isOnline: true,
+    joinedDate: new Date('2023-01-15')
   });
 
-  const [chats] = useState<Chat[]>([
+  const [chats, setChats] = useState<Chat[]>([
     {
       id: 'chat1',
       name: 'Sarah Wilson',
@@ -66,12 +50,17 @@ function App() {
         sender: 'user2',
         timestamp: new Date(Date.now() - 300000),
         isOwn: false,
-        isRead: false
+        isRead: false,
+        type: 'text',
+        reactions: []
       },
       unreadCount: 2,
       isOnline: true,
       isMuted: false,
-      isTyping: false
+      isTyping: false,
+      isPinned: true,
+      isArchived: false,
+      updatedAt: new Date(Date.now() - 300000)
     },
     {
       id: 'chat2',
@@ -85,12 +74,17 @@ function App() {
         sender: 'user3',
         timestamp: new Date(Date.now() - 600000),
         isOwn: false,
-        isRead: true
+        isRead: true,
+        type: 'text',
+        reactions: []
       },
       unreadCount: 0,
       isOnline: true,
       isMuted: false,
-      isTyping: true
+      isTyping: true,
+      isPinned: true,
+      isArchived: false,
+      updatedAt: new Date(Date.now() - 600000)
     },
     {
       id: 'chat3',
@@ -104,11 +98,16 @@ function App() {
         sender: 'user1',
         timestamp: new Date(Date.now() - 3600000),
         isOwn: true,
-        isRead: true
+        isRead: true,
+        type: 'text',
+        reactions: []
       },
       unreadCount: 0,
       isOnline: false,
-      isMuted: false
+      isMuted: false,
+      isPinned: false,
+      isArchived: false,
+      updatedAt: new Date(Date.now() - 3600000)
     },
     {
       id: 'chat4',
@@ -122,11 +121,39 @@ function App() {
         sender: 'user7',
         timestamp: new Date(Date.now() - 7200000),
         isOwn: false,
-        isRead: true
+        isRead: true,
+        type: 'text',
+        reactions: []
       },
       unreadCount: 0,
       isOnline: true,
-      isMuted: true
+      isMuted: true,
+      isPinned: false,
+      isArchived: false,
+      updatedAt: new Date(Date.now() - 7200000)
+    },
+    {
+      id: 'chat5',
+      name: 'Development Team',
+      avatar: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=150',
+      type: 'group',
+      participants: ['user1', 'user8', 'user9', 'user10'],
+      lastMessage: {
+        id: 'msg5',
+        content: 'New deployment is live! 🚀',
+        sender: 'user8',
+        timestamp: new Date(Date.now() - 10800000),
+        isOwn: false,
+        isRead: true,
+        type: 'text',
+        reactions: []
+      },
+      unreadCount: 5,
+      isOnline: true,
+      isMuted: false,
+      isPinned: false,
+      isArchived: false,
+      updatedAt: new Date(Date.now() - 10800000)
     }
   ]);
 
@@ -137,7 +164,9 @@ function App() {
       sender: 'user2',
       timestamp: new Date(Date.now() - 1800000),
       isOwn: false,
-      isRead: true
+      isRead: true,
+      type: 'text',
+      reactions: []
     },
     {
       id: 'msg2',
@@ -146,7 +175,9 @@ function App() {
       timestamp: new Date(Date.now() - 1500000),
       isOwn: true,
       isRead: true,
-      reactions: [{ emoji: '👍', count: 1, users: ['user2'] }]
+      type: 'text',
+      reactions: [{ emoji: '👍', count: 1, users: ['user2'] }],
+      isEdited: false
     },
     {
       id: 'msg3',
@@ -154,7 +185,9 @@ function App() {
       sender: 'user2',
       timestamp: new Date(Date.now() - 900000),
       isOwn: false,
-      isRead: true
+      isRead: true,
+      type: 'text',
+      reactions: []
     },
     {
       id: 'msg4',
@@ -163,10 +196,12 @@ function App() {
       timestamp: new Date(Date.now() - 600000),
       isOwn: true,
       isRead: true,
+      type: 'text',
       reactions: [
         { emoji: '🔥', count: 1, users: ['user2'] },
         { emoji: '💯', count: 1, users: ['user2'] }
-      ]
+      ],
+      isEdited: false
     },
     {
       id: 'msg5',
@@ -174,14 +209,25 @@ function App() {
       sender: 'user2',
       timestamp: new Date(Date.now() - 300000),
       isOwn: false,
-      isRead: false
+      isRead: false,
+      type: 'text',
+      reactions: []
     }
   ]);
 
+  // UI state
   const [currentChatId, setCurrentChatId] = useState<string>('chat1');
   const [searchQuery, setSearchQuery] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showMediaViewer, setShowMediaViewer] = useState(false);
+  const [mediaViewerUrl, setMediaViewerUrl] = useState('');
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showThemeCustomizer, setShowThemeCustomizer] = useState(false);
+  const [customTheme, setCustomTheme] = useState(null);
+  const [onlineUsers] = useState(new Set(['user2', 'user3', 'user7', 'user8']));
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
@@ -189,7 +235,8 @@ function App() {
   // Effects
   useEffect(() => {
     document.documentElement.className = theme;
-    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('messenger-theme', theme);
   }, [theme]);
 
   useEffect(() => {
@@ -206,36 +253,70 @@ function App() {
     }
   }, [newMessage]);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isModifierPressed = e.ctrlKey || e.metaKey;
+      
+      switch (true) {
+        case isModifierPressed && e.key === 'k':
+          e.preventDefault();
+          const searchInput = document.querySelector('.search-input input') as HTMLInputElement;
+          searchInput?.focus();
+          break;
+        case isModifierPressed && e.key === 't':
+          e.preventDefault();
+          toggleTheme();
+          break;
+        case e.key === 'Escape':
+          setShowEmojiPicker(false);
+          setShowMediaViewer(false);
+          setShowUserProfile(false);
+          setShowSettings(false);
+          setShowThemeCustomizer(false);
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Handlers
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const handleSendMessage = (content: string, type: 'text' | 'image' | 'file' = 'text') => {
+    if (!content.trim()) return;
 
     const message: Message = {
       id: Date.now().toString(),
-      content: newMessage,
+      content,
       sender: currentUser.id,
       timestamp: new Date(),
       isOwn: true,
-      isRead: false
+      isRead: false,
+      type,
+      reactions: [],
+      isEdited: false
     };
 
     setMessages(prev => [...prev, message]);
-    setNewMessage('');
-    messageInputRef.current?.focus();
+    
+    // Update chat's last message
+    setChats(prev => prev.map(chat => 
+      chat.id === currentChatId 
+        ? { ...chat, lastMessage: message, updatedAt: new Date() }
+        : chat
+    ));
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+  const handleTyping = (typing: boolean) => {
+    setIsTyping(typing);
   };
 
-  const handleReaction = (messageId: string, emoji: string) => {
+  const handleAddReaction = (messageId: string, emoji: string) => {
     setMessages(prev => prev.map(msg => {
       if (msg.id === messageId) {
         const reactions = msg.reactions || [];
@@ -243,7 +324,6 @@ function App() {
         
         if (existingReaction) {
           if (existingReaction.users.includes(currentUser.id)) {
-            // Remove reaction
             return {
               ...msg,
               reactions: reactions.map(r => 
@@ -253,7 +333,6 @@ function App() {
               ).filter(r => r.count > 0)
             };
           } else {
-            // Add reaction
             return {
               ...msg,
               reactions: reactions.map(r => 
@@ -264,7 +343,6 @@ function App() {
             };
           }
         } else {
-          // New reaction
           return {
             ...msg,
             reactions: [...reactions, { emoji, users: [currentUser.id], count: 1 }]
@@ -273,6 +351,52 @@ function App() {
       }
       return msg;
     }));
+  };
+
+  const handleEditMessage = (messageId: string, content: string) => {
+    setMessages(prev => prev.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, content, isEdited: true }
+        : msg
+    ));
+  };
+
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages(prev => prev.filter(msg => msg.id !== messageId));
+  };
+
+  const handleSelectChat = (chatId: string) => {
+    setCurrentChatId(chatId);
+    
+    // Mark messages as read
+    setChats(prev => prev.map(chat => 
+      chat.id === chatId 
+        ? { ...chat, unreadCount: 0 }
+        : chat
+    ));
+
+    // Dispatch event for accessibility
+    const chat = chats.find(c => c.id === chatId);
+    if (chat) {
+      window.dispatchEvent(new CustomEvent('app:chat-changed', { 
+        detail: { chatName: chat.name }
+      }));
+    }
+  };
+
+  const handleUpdateUser = (updates: Partial<UserType>) => {
+    // In a real app, this would update the user via API
+    console.log('User updates:', updates);
+  };
+
+  const handleUpdateTheme = (theme: any) => {
+    setCustomTheme(theme);
+    // Apply custom theme variables
+    if (theme) {
+      Object.entries(theme).forEach(([key, value]) => {
+        document.documentElement.style.setProperty(`--${key}`, value as string);
+      });
+    }
   };
 
   // Utility functions
@@ -293,10 +417,6 @@ function App() {
     return `${days}d ago`;
   };
 
-  const filteredChats = chats.filter(chat =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const currentChat = chats.find(chat => chat.id === currentChatId);
   const totalUnread = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
 
@@ -306,22 +426,37 @@ function App() {
       <div className="sidebar">
         {/* Header */}
         <div className="sidebar-header">
-          <div className="user-profile">
+          <div className="user-profile" onClick={() => setShowUserProfile(true)}>
             <div className="user-avatar">
               <img src={currentUser.avatar} alt={currentUser.name} />
-              <div className="status-indicator"></div>
+              <div className="status-indicator online"></div>
             </div>
             <div className="user-info">
               <h3>{currentUser.name}</h3>
-              <p>Available</p>
+              <p>{currentUser.status}</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-button" onClick={toggleTheme}>
+            <button 
+              className="icon-button" 
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
-            <button className="icon-button">
+            <button 
+              className="icon-button"
+              onClick={() => setShowSettings(true)}
+              title="Settings"
+            >
               <Settings size={20} />
+            </button>
+            <button 
+              className="icon-button"
+              onClick={() => setShowThemeCustomizer(true)}
+              title="Customize theme"
+            >
+              <Star size={20} />
             </button>
           </div>
         </div>
@@ -336,57 +471,26 @@ function App() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button 
+                className="clear-search"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+              >
+                ×
+              </button>
+            )}
           </div>
         </div>
 
         {/* Chat List */}
-        <div className="chat-list">
-          {filteredChats.map(chat => (
-            <div
-              key={chat.id}
-              className={`chat-item ${currentChatId === chat.id ? 'active' : ''} ${chat.unreadCount > 0 ? 'unread' : ''}`}
-              onClick={() => setCurrentChatId(chat.id)}
-            >
-              <div className="chat-avatar">
-                <img src={chat.avatar} alt={chat.name} />
-                {chat.isOnline && <div className="online-dot"></div>}
-              </div>
-              <div className="chat-content">
-                <div className="chat-header">
-                  <h4 className="chat-name">{chat.name}</h4>
-                  <span className="chat-time">
-                    {chat.lastMessage && formatTime(chat.lastMessage.timestamp)}
-                  </span>
-                </div>
-                <div className="chat-preview">
-                  <div className="last-message">
-                    {chat.isTyping ? (
-                      <div className="typing-indicator">
-                        <div className="typing-dots">
-                          <div className="typing-dot"></div>
-                          <div className="typing-dot"></div>
-                          <div className="typing-dot"></div>
-                        </div>
-                        typing...
-                      </div>
-                    ) : (
-                      <>
-                        {chat.lastMessage?.isOwn && <Check size={14} />}
-                        <span>{chat.lastMessage?.content || 'No messages yet'}</span>
-                      </>
-                    )}
-                  </div>
-                  <div className="chat-badges">
-                    {chat.isMuted && <BellOff size={14} className="mute-icon" />}
-                    {chat.unreadCount > 0 && (
-                      <span className="unread-count">{chat.unreadCount}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ChatList
+          chats={chats}
+          currentChat={currentChatId}
+          onSelectChat={handleSelectChat}
+          onlineUsers={onlineUsers}
+          searchQuery={searchQuery}
+        />
       </div>
 
       {/* Main Chat Area */}
@@ -398,7 +502,14 @@ function App() {
               <div className="chat-info">
                 <div className="chat-avatar">
                   <img src={currentChat.avatar} alt={currentChat.name} />
-                  {currentChat.isOnline && <div className="online-dot"></div>}
+                  {currentChat.type === 'direct' && onlineUsers.has(currentChat.id) && (
+                    <div className="online-dot"></div>
+                  )}
+                  {currentChat.type === 'group' && (
+                    <div className="group-indicator">
+                      <Users size={12} />
+                    </div>
+                  )}
                 </div>
                 <div className="chat-details">
                   <h2>{currentChat.name}</h2>
@@ -412,7 +523,9 @@ function App() {
                         </div>
                         typing...
                       </span>
-                    ) : currentChat.isOnline ? (
+                    ) : currentChat.type === 'group' ? (
+                      `${currentChat.participants.length} members`
+                    ) : onlineUsers.has(currentChat.id) ? (
                       'Online'
                     ) : (
                       `Last seen ${formatLastSeen(new Date(Date.now() - 3600000))}`
@@ -421,95 +534,47 @@ function App() {
                 </div>
               </div>
               <div className="chat-actions">
-                <button className="icon-button">
+                <button className="icon-button" title="Voice call">
                   <Phone size={20} />
                 </button>
-                <button className="icon-button">
+                <button className="icon-button" title="Video call">
                   <Video size={20} />
                 </button>
-                <button className="icon-button">
+                <button className="icon-button" title="More options">
                   <MoreVertical size={20} />
                 </button>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="messages-container">
-              {messages.map(message => (
-                <div key={message.id} className={`message ${message.isOwn ? 'own' : ''} fade-in`}>
-                  {!message.isOwn && (
-                    <div className="message-avatar">
-                      <img src={currentChat.avatar} alt="" />
-                    </div>
-                  )}
-                  <div className="message-content">
-                    <div className="message-bubble">
-                      <p className="message-text">{message.content}</p>
-                    </div>
-                    {message.reactions && message.reactions.length > 0 && (
-                      <div className="reactions">
-                        {message.reactions.map(reaction => (
-                          <button
-                            key={reaction.emoji}
-                            className={`reaction ${reaction.users.includes(currentUser.id) ? 'own' : ''}`}
-                            onClick={() => handleReaction(message.id, reaction.emoji)}
-                          >
-                            {reaction.emoji} {reaction.count}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div className="message-time">
-                      <span>{formatTime(message.timestamp)}</span>
-                      {message.isOwn && (
-                        <div className="read-status">
-                          {message.isRead ? <CheckCheck size={14} /> : <Check size={14} />}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
+            <ChatArea
+              messages={messages}
+              onAddReaction={handleAddReaction}
+              onEditMessage={handleEditMessage}
+              onDeleteMessage={handleDeleteMessage}
+              currentUserId={currentUser.id}
+            />
 
             {/* Message Input */}
-            <div className="message-input-container">
-              <div className="input-wrapper">
-                <div className="input-actions-left">
-                  <button className="icon-button">
-                    <Paperclip size={20} />
-                  </button>
-                  <button className="icon-button">
-                    <Image size={20} />
-                  </button>
-                </div>
-                <textarea
-                  ref={messageInputRef}
-                  className="message-input"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type a message..."
-                  rows={1}
+            <MessageInput
+              onSendMessage={handleSendMessage}
+              onTyping={handleTyping}
+              onShowEmojiPicker={() => setShowEmojiPicker(!showEmojiPicker)}
+              showEmojiPicker={showEmojiPicker}
+            />
+
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div className="emoji-picker-overlay">
+                <EmojiPicker
+                  onEmojiSelect={(emoji) => {
+                    setNewMessage(prev => prev + emoji);
+                    setShowEmojiPicker(false);
+                  }}
+                  onClose={() => setShowEmojiPicker(false)}
                 />
-                <div className="input-actions-right">
-                  <button className="icon-button">
-                    <Smile size={20} />
-                  </button>
-                  <button className="icon-button">
-                    <Mic size={20} />
-                  </button>
-                  <button
-                    className="send-button"
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
-                  >
-                    <Send size={18} />
-                  </button>
-                </div>
               </div>
-            </div>
+            )}
           </>
         ) : (
           <div className="welcome-screen">
@@ -528,11 +593,61 @@ function App() {
                   <span className="stat-number">{totalUnread}</span>
                   <span className="stat-label">Unread</span>
                 </div>
+                <div className="stat-item">
+                  <span className="stat-number">{onlineUsers.size}</span>
+                  <span className="stat-label">Online</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-number">24/7</span>
+                  <span className="stat-label">Available</span>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {showUserProfile && (
+        <UserProfile
+          user={currentUser}
+          onClose={() => setShowUserProfile(false)}
+          onUpdateUser={handleUpdateUser}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsModal
+          currentUser={currentUser}
+          theme={theme}
+          onClose={() => setShowSettings(false)}
+          onThemeChange={toggleTheme}
+          onUpdateUser={handleUpdateUser}
+        />
+      )}
+
+      {showThemeCustomizer && (
+        <ThemeCustomizer
+          currentTheme={customTheme}
+          onUpdateTheme={handleUpdateTheme}
+          onClose={() => setShowThemeCustomizer(false)}
+        />
+      )}
+
+      {showMediaViewer && (
+        <MediaViewer
+          mediaUrl={mediaViewerUrl}
+          onClose={() => setShowMediaViewer(false)}
+        />
+      )}
+
+      {/* Overlay for emoji picker */}
+      {showEmojiPicker && (
+        <div 
+          className="overlay"
+          onClick={() => setShowEmojiPicker(false)}
+        />
+      )}
     </div>
   );
 }
