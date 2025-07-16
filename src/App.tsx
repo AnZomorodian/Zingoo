@@ -1,43 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  User, Settings, Search, Plus, Send, Paperclip, Smile, MoreVertical, 
-  Phone, Video, Pin, Star, Bell, BellOff, Archive, Trash2, Edit3, 
-  MessageCircle, Users, Clock, Check, CheckCheck, ArrowLeft, X, 
-  Heart, ThumbsUp, Laugh, Angry, Frown, Surprise, Camera, Upload, 
-  Palette, Shield, Globe, Moon, Sun, Zap, Activity, Headphones, 
-  Mic, MicOff, Volume2, VolumeX, Eye, EyeOff, Lock, Unlock, 
-  UserPlus, UserMinus, Crown, Award, Bookmark, Share, Download, 
-  Copy, RefreshCw, Wifi, WifiOff, Battery, Signal, Image, File,
-  MapPin, Calendar, Smile as StickerIcon, Trending, Filter,
-  ChevronDown, ChevronRight, Maximize2, Minimize2, RotateCcw,
-  Info, Hash, AtSign, Bold, Italic, Underline, Code, Link2
+  Search, Send, Phone, Video, Settings, Sun, Moon, 
+  MessageCircle, Check, CheckCheck, Smile, Paperclip, 
+  Image, Mic, MoreVertical, Bell, BellOff, Users
 } from 'lucide-react';
+import './App.css';
 
 interface User {
   id: string;
   name: string;
   avatar: string;
-  status: {
-    type: 'online' | 'away' | 'busy' | 'offline';
-    text: string;
-    emoji?: string;
-  };
-  isOnline: boolean;
+  status: 'online' | 'away' | 'busy' | 'offline';
   lastSeen: Date;
-  bio: string;
 }
 
 interface Message {
   id: string;
   content: string;
-  type: 'text' | 'image' | 'file' | 'voice';
   sender: string;
   timestamp: Date;
   isOwn: boolean;
   isRead: boolean;
-  reactions: Array<{ emoji: string; users: string[]; count: number }>;
-  replyTo?: string;
-  isEdited?: boolean;
+  reactions?: Array<{ emoji: string; count: number; users: string[] }>;
 }
 
 interface Chat {
@@ -48,26 +32,29 @@ interface Chat {
   participants: string[];
   lastMessage: Message | null;
   unreadCount: number;
-  isPinned: boolean;
+  isOnline: boolean;
   isMuted: boolean;
-  isArchived: boolean;
   isTyping?: boolean;
 }
 
 function App() {
-  // Sample data
+  // Theme state
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    return (saved as 'light' | 'dark') || 'light';
+  });
+
+  // App state
   const [currentUser] = useState<User>({
     id: 'user1',
     name: 'Alex Johnson',
     avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-    status: { type: 'online', text: 'Available', emoji: '💚' },
-    isOnline: true,
-    lastSeen: new Date(),
-    bio: 'Product Designer at TechCorp'
+    status: 'online',
+    lastSeen: new Date()
   });
 
-  const [chats, setChats] = useState<Record<string, Chat>>({
-    'chat1': {
+  const [chats] = useState<Chat[]>([
+    {
       id: 'chat1',
       name: 'Sarah Wilson',
       avatar: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150',
@@ -75,21 +62,18 @@ function App() {
       participants: ['user1', 'user2'],
       lastMessage: {
         id: 'msg1',
-        content: 'Hey! How are you doing today?',
-        type: 'text',
+        content: 'Hey! How are you doing today? I was thinking we could grab coffee later.',
         sender: 'user2',
         timestamp: new Date(Date.now() - 300000),
         isOwn: false,
-        isRead: false,
-        reactions: []
+        isRead: false
       },
       unreadCount: 2,
-      isPinned: true,
+      isOnline: true,
       isMuted: false,
-      isArchived: false,
       isTyping: false
     },
-    'chat2': {
+    {
       id: 'chat2',
       name: 'Design Team',
       avatar: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=150',
@@ -97,21 +81,18 @@ function App() {
       participants: ['user1', 'user3', 'user4', 'user5'],
       lastMessage: {
         id: 'msg2',
-        content: 'The new mockups look amazing! 🎨',
-        type: 'text',
+        content: 'The new mockups look amazing! Great work everyone 🎨',
         sender: 'user3',
         timestamp: new Date(Date.now() - 600000),
         isOwn: false,
-        isRead: true,
-        reactions: [{ emoji: '👍', users: ['user1'], count: 1 }]
+        isRead: true
       },
       unreadCount: 0,
-      isPinned: false,
+      isOnline: true,
       isMuted: false,
-      isArchived: false,
       isTyping: true
     },
-    'chat3': {
+    {
       id: 'chat3',
       name: 'Mike Chen',
       avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150',
@@ -119,154 +100,131 @@ function App() {
       participants: ['user1', 'user6'],
       lastMessage: {
         id: 'msg3',
-        content: 'Thanks for the help with the project!',
-        type: 'text',
+        content: 'Thanks for the help with the project! Really appreciate it.',
         sender: 'user1',
         timestamp: new Date(Date.now() - 3600000),
         isOwn: true,
-        isRead: true,
-        reactions: []
+        isRead: true
       },
       unreadCount: 0,
-      isPinned: false,
-      isMuted: false,
-      isArchived: false
+      isOnline: false,
+      isMuted: false
+    },
+    {
+      id: 'chat4',
+      name: 'Emma Davis',
+      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
+      type: 'direct',
+      participants: ['user1', 'user7'],
+      lastMessage: {
+        id: 'msg4',
+        content: 'See you at the meeting tomorrow!',
+        sender: 'user7',
+        timestamp: new Date(Date.now() - 7200000),
+        isOwn: false,
+        isRead: true
+      },
+      unreadCount: 0,
+      isOnline: true,
+      isMuted: true
     }
-  });
+  ]);
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'msg1',
       content: 'Hey Alex! How\'s the new project coming along?',
-      type: 'text',
       sender: 'user2',
       timestamp: new Date(Date.now() - 1800000),
       isOwn: false,
-      isRead: true,
-      reactions: []
+      isRead: true
     },
     {
       id: 'msg2',
-      content: 'It\'s going really well! Just finished the wireframes. Want to take a look?',
-      type: 'text',
+      content: 'It\'s going really well! Just finished the wireframes and I\'m pretty excited about the direction we\'re taking.',
       sender: 'user1',
       timestamp: new Date(Date.now() - 1500000),
       isOwn: true,
       isRead: true,
-      reactions: [{ emoji: '👍', users: ['user2'], count: 1 }]
+      reactions: [{ emoji: '👍', count: 1, users: ['user2'] }]
     },
     {
       id: 'msg3',
-      content: 'Absolutely! I\'d love to see what you\'ve been working on.',
-      type: 'text',
+      content: 'That sounds fantastic! I\'d love to see what you\'ve been working on. The team has been really curious about the progress.',
       sender: 'user2',
       timestamp: new Date(Date.now() - 900000),
       isOwn: false,
-      isRead: true,
-      reactions: []
+      isRead: true
     },
     {
       id: 'msg4',
-      content: 'Here\'s a preview of the main dashboard design',
-      type: 'image',
+      content: 'I\'ll share the designs in our next team meeting. I think everyone will be impressed with what we\'ve accomplished so far.',
       sender: 'user1',
       timestamp: new Date(Date.now() - 600000),
       isOwn: true,
       isRead: true,
       reactions: [
-        { emoji: '🔥', users: ['user2'], count: 1 },
-        { emoji: '💯', users: ['user2'], count: 1 }
+        { emoji: '🔥', count: 1, users: ['user2'] },
+        { emoji: '💯', count: 1, users: ['user2'] }
       ]
     },
     {
       id: 'msg5',
-      content: 'This looks incredible! The color scheme is perfect.',
-      type: 'text',
+      content: 'Perfect! I can\'t wait to see them. The client is going to love this direction.',
       sender: 'user2',
       timestamp: new Date(Date.now() - 300000),
       isOwn: false,
-      isRead: false,
-      reactions: []
+      isRead: false
     }
   ]);
 
-  // State management
-  const [currentChat, setCurrentChat] = useState<string>('chat1');
+  const [currentChatId, setCurrentChatId] = useState<string>('chat1');
   const [searchQuery, setSearchQuery] = useState('');
   const [newMessage, setNewMessage] = useState('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [showChatInfo, setShowChatInfo] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
-  const recordingInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Effects
+  useEffect(() => {
+    document.documentElement.className = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (isRecording) {
-      recordingInterval.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+    if (newMessage.trim()) {
+      setIsTyping(true);
+      const timer = setTimeout(() => setIsTyping(false), 1000);
+      return () => clearTimeout(timer);
     } else {
-      if (recordingInterval.current) {
-        clearInterval(recordingInterval.current);
-      }
-      setRecordingTime(0);
+      setIsTyping(false);
     }
-
-    return () => {
-      if (recordingInterval.current) {
-        clearInterval(recordingInterval.current);
-      }
-    };
-  }, [isRecording]);
+  }, [newMessage]);
 
   // Handlers
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !currentChat) return;
+    if (!newMessage.trim()) return;
 
     const message: Message = {
       id: Date.now().toString(),
       content: newMessage,
-      type: 'text',
       sender: currentUser.id,
       timestamp: new Date(),
       isOwn: true,
-      isRead: false,
-      reactions: [],
-      replyTo: replyingTo || undefined
+      isRead: false
     };
 
     setMessages(prev => [...prev, message]);
     setNewMessage('');
-    setReplyingTo(null);
-    
-    // Update chat's last message
-    setChats(prev => ({
-      ...prev,
-      [currentChat]: {
-        ...prev[currentChat],
-        lastMessage: message
-      }
-    }));
-
     messageInputRef.current?.focus();
   };
 
@@ -280,13 +238,15 @@ function App() {
   const handleReaction = (messageId: string, emoji: string) => {
     setMessages(prev => prev.map(msg => {
       if (msg.id === messageId) {
-        const existingReaction = msg.reactions.find(r => r.emoji === emoji);
+        const reactions = msg.reactions || [];
+        const existingReaction = reactions.find(r => r.emoji === emoji);
+        
         if (existingReaction) {
           if (existingReaction.users.includes(currentUser.id)) {
             // Remove reaction
             return {
               ...msg,
-              reactions: msg.reactions.map(r => 
+              reactions: reactions.map(r => 
                 r.emoji === emoji 
                   ? { ...r, users: r.users.filter(u => u !== currentUser.id), count: r.count - 1 }
                   : r
@@ -296,7 +256,7 @@ function App() {
             // Add reaction
             return {
               ...msg,
-              reactions: msg.reactions.map(r => 
+              reactions: reactions.map(r => 
                 r.emoji === emoji 
                   ? { ...r, users: [...r.users, currentUser.id], count: r.count + 1 }
                   : r
@@ -307,7 +267,7 @@ function App() {
           // New reaction
           return {
             ...msg,
-            reactions: [...msg.reactions, { emoji, users: [currentUser.id], count: 1 }]
+            reactions: [...reactions, { emoji, users: [currentUser.id], count: 1 }]
           };
         }
       }
@@ -315,26 +275,7 @@ function App() {
     }));
   };
 
-  const handleVoiceRecording = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      // In a real app, this would process the recording
-      const voiceMessage: Message = {
-        id: Date.now().toString(),
-        content: `Voice message (${recordingTime}s)`,
-        type: 'voice',
-        sender: currentUser.id,
-        timestamp: new Date(),
-        isOwn: true,
-        isRead: false,
-        reactions: []
-      };
-      setMessages(prev => [...prev, voiceMessage]);
-    } else {
-      setIsRecording(true);
-    }
-  };
-
+  // Utility functions
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -352,72 +293,50 @@ function App() {
     return `${days}d ago`;
   };
 
-  const filteredChats = Object.values(chats).filter(chat =>
+  const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const currentChatData = currentChat ? chats[currentChat] : null;
-  const totalUnread = Object.values(chats).reduce((sum, chat) => sum + chat.unreadCount, 0);
+  const currentChat = chats.find(chat => chat.id === currentChatId);
+  const totalUnread = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
 
   return (
-    <div className={`messenger-app ${theme} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className={`messenger-app ${theme}`}>
       {/* Sidebar */}
       <div className="sidebar">
         {/* Header */}
         <div className="sidebar-header">
-          <div className="user-section" onClick={() => setShowProfile(true)}>
+          <div className="user-profile">
             <div className="user-avatar">
               <img src={currentUser.avatar} alt={currentUser.name} />
-              <div className={`status-dot ${currentUser.status.type}`}></div>
+              <div className="status-indicator"></div>
             </div>
             <div className="user-info">
               <h3>{currentUser.name}</h3>
-              <p className="status-text">
-                {currentUser.status.emoji} {currentUser.status.text}
-              </p>
+              <p>Available</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn" onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
-              {sidebarCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
-            </button>
-            <button className="icon-btn" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+            <button className="icon-button" onClick={toggleTheme}>
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
-            <button className="icon-btn" onClick={() => setShowSettings(true)}>
+            <button className="icon-button">
               <Settings size={20} />
             </button>
           </div>
         </div>
 
         {/* Search */}
-        <div className="search-section">
-          <div className="search-input-wrapper">
-            <Search size={18} />
+        <div className="search-container">
+          <div className="search-input">
+            <Search size={18} className="search-icon" />
             <input
               type="text"
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')}>
-                <X size={16} />
-              </button>
-            )}
           </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="quick-actions">
-          <button className="quick-action-btn">
-            <Plus size={16} />
-            <span>New Chat</span>
-          </button>
-          <button className="quick-action-btn">
-            <Users size={16} />
-            <span>New Group</span>
-          </button>
         </div>
 
         {/* Chat List */}
@@ -425,40 +344,42 @@ function App() {
           {filteredChats.map(chat => (
             <div
               key={chat.id}
-              className={`chat-item ${currentChat === chat.id ? 'active' : ''} ${chat.unreadCount > 0 ? 'unread' : ''}`}
-              onClick={() => setCurrentChat(chat.id)}
+              className={`chat-item ${currentChatId === chat.id ? 'active' : ''} ${chat.unreadCount > 0 ? 'unread' : ''}`}
+              onClick={() => setCurrentChatId(chat.id)}
             >
               <div className="chat-avatar">
                 <img src={chat.avatar} alt={chat.name} />
-                {chat.type === 'group' && <div className="group-indicator"><Users size={12} /></div>}
-                <div className="online-indicator"></div>
+                {chat.isOnline && <div className="online-dot"></div>}
               </div>
-              <div className="chat-info">
+              <div className="chat-content">
                 <div className="chat-header">
-                  <h4>{chat.name}</h4>
-                  <span className="timestamp">
+                  <h4 className="chat-name">{chat.name}</h4>
+                  <span className="chat-time">
                     {chat.lastMessage && formatTime(chat.lastMessage.timestamp)}
                   </span>
                 </div>
                 <div className="chat-preview">
-                  <p className={`last-message ${chat.isTyping ? 'typing' : ''}`}>
+                  <div className="last-message">
                     {chat.isTyping ? (
-                      <span className="typing-indicator">
-                        <span></span><span></span><span></span>
+                      <div className="typing-indicator">
+                        <div className="typing-dots">
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
+                        </div>
                         typing...
-                      </span>
+                      </div>
                     ) : (
                       <>
                         {chat.lastMessage?.isOwn && <Check size={14} />}
-                        {chat.lastMessage?.content || 'No messages yet'}
+                        <span>{chat.lastMessage?.content || 'No messages yet'}</span>
                       </>
                     )}
-                  </p>
+                  </div>
                   <div className="chat-badges">
-                    {chat.isPinned && <Pin size={12} />}
-                    {chat.isMuted && <BellOff size={12} />}
+                    {chat.isMuted && <BellOff size={14} className="mute-icon" />}
                     {chat.unreadCount > 0 && (
-                      <span className="unread-badge">{chat.unreadCount}</span>
+                      <span className="unread-count">{chat.unreadCount}</span>
                     )}
                   </div>
                 </div>
@@ -469,209 +390,122 @@ function App() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="main-area">
-        {currentChatData ? (
+      <div className="main-chat">
+        {currentChat ? (
           <>
             {/* Chat Header */}
-            <div className="chat-header">
+            <div className="chat-header-main">
               <div className="chat-info">
                 <div className="chat-avatar">
-                  <img src={currentChatData.avatar} alt={currentChatData.name} />
-                  <div className="online-indicator active"></div>
+                  <img src={currentChat.avatar} alt={currentChat.name} />
+                  {currentChat.isOnline && <div className="online-dot"></div>}
                 </div>
                 <div className="chat-details">
-                  <h3>{currentChatData.name}</h3>
-                  <p className="status">
-                    {currentChatData.isTyping ? (
-                      <span className="typing-text">
-                        <Activity size={12} />
+                  <h2>{currentChat.name}</h2>
+                  <div className="chat-status">
+                    {currentChat.isTyping ? (
+                      <span className="typing-indicator">
+                        <div className="typing-dots">
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
+                          <div className="typing-dot"></div>
+                        </div>
                         typing...
                       </span>
+                    ) : currentChat.isOnline ? (
+                      'Online'
                     ) : (
-                      'Last seen recently'
+                      `Last seen ${formatLastSeen(new Date(Date.now() - 3600000))}`
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
               <div className="chat-actions">
-                <button className="icon-btn">
+                <button className="icon-button">
                   <Phone size={20} />
                 </button>
-                <button className="icon-btn">
+                <button className="icon-button">
                   <Video size={20} />
                 </button>
-                <button className="icon-btn" onClick={() => setShowChatInfo(!showChatInfo)}>
-                  <Info size={20} />
-                </button>
-                <button className="icon-btn">
+                <button className="icon-button">
                   <MoreVertical size={20} />
                 </button>
               </div>
             </div>
 
-            {/* Messages Area */}
-            <div className="messages-area">
-              <div className="messages-container">
-                {messages.map(message => (
-                  <div
-                    key={message.id}
-                    className={`message ${message.isOwn ? 'own' : 'other'} ${selectedMessage === message.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedMessage(selectedMessage === message.id ? null : message.id)}
-                  >
-                    {!message.isOwn && (
-                      <div className="message-avatar">
-                        <img src={currentChatData.avatar} alt="" />
+            {/* Messages */}
+            <div className="messages-container">
+              {messages.map(message => (
+                <div key={message.id} className={`message ${message.isOwn ? 'own' : ''} fade-in`}>
+                  {!message.isOwn && (
+                    <div className="message-avatar">
+                      <img src={currentChat.avatar} alt="" />
+                    </div>
+                  )}
+                  <div className="message-content">
+                    <div className="message-bubble">
+                      <p className="message-text">{message.content}</p>
+                    </div>
+                    {message.reactions && message.reactions.length > 0 && (
+                      <div className="reactions">
+                        {message.reactions.map(reaction => (
+                          <button
+                            key={reaction.emoji}
+                            className={`reaction ${reaction.users.includes(currentUser.id) ? 'own' : ''}`}
+                            onClick={() => handleReaction(message.id, reaction.emoji)}
+                          >
+                            {reaction.emoji} {reaction.count}
+                          </button>
+                        ))}
                       </div>
                     )}
-                    <div className="message-content">
-                      {message.replyTo && (
-                        <div className="reply-preview">
-                          <div className="reply-line"></div>
-                          <div className="reply-content">
-                            <span className="reply-author">You</span>
-                            <p>Original message content...</p>
-                          </div>
+                    <div className="message-time">
+                      <span>{formatTime(message.timestamp)}</span>
+                      {message.isOwn && (
+                        <div className="read-status">
+                          {message.isRead ? <CheckCheck size={14} /> : <Check size={14} />}
                         </div>
                       )}
-                      <div className="message-bubble">
-                        {message.type === 'image' ? (
-                          <div className="image-message">
-                            <img src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=400" alt="Shared image" />
-                            <p>{message.content}</p>
-                          </div>
-                        ) : message.type === 'voice' ? (
-                          <div className="voice-message">
-                            <button className="play-btn">
-                              <Volume2 size={16} />
-                            </button>
-                            <div className="voice-waveform">
-                              <div className="waveform-bars">
-                                {Array.from({ length: 20 }).map((_, i) => (
-                                  <div key={i} className="bar" style={{ height: `${Math.random() * 100}%` }}></div>
-                                ))}
-                              </div>
-                            </div>
-                            <span className="voice-duration">0:{recordingTime.toString().padStart(2, '0')}</span>
-                          </div>
-                        ) : (
-                          <p>{message.content}</p>
-                        )}
-                        {message.reactions.length > 0 && (
-                          <div className="message-reactions">
-                            {message.reactions.map(reaction => (
-                              <button
-                                key={reaction.emoji}
-                                className={`reaction ${reaction.users.includes(currentUser.id) ? 'own' : ''}`}
-                                onClick={() => handleReaction(message.id, reaction.emoji)}
-                              >
-                                {reaction.emoji} {reaction.count}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="message-meta">
-                        <span className="timestamp">{formatTime(message.timestamp)}</span>
-                        {message.isOwn && (
-                          <span className="read-status">
-                            {message.isRead ? <CheckCheck size={14} /> : <Check size={14} />}
-                          </span>
-                        )}
-                        {message.isEdited && <span className="edited">edited</span>}
-                      </div>
                     </div>
-                    {selectedMessage === message.id && (
-                      <div className="message-actions">
-                        <button onClick={() => setReplyingTo(message.id)}>
-                          <ArrowLeft size={16} />
-                        </button>
-                        <button onClick={() => handleReaction(message.id, '👍')}>
-                          <ThumbsUp size={16} />
-                        </button>
-                        <button onClick={() => handleReaction(message.id, '❤️')}>
-                          <Heart size={16} />
-                        </button>
-                        <button>
-                          <Copy size={16} />
-                        </button>
-                        {message.isOwn && (
-                          <>
-                            <button>
-                              <Edit3 size={16} />
-                            </button>
-                            <button>
-                              <Trash2 size={16} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    )}
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
-            <div className="message-input-area">
-              {replyingTo && (
-                <div className="reply-bar">
-                  <div className="reply-info">
-                    <ArrowLeft size={16} />
-                    <span>Replying to message</span>
-                  </div>
-                  <button onClick={() => setReplyingTo(null)}>
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
-              <div className="message-input-container">
+            <div className="message-input-container">
+              <div className="input-wrapper">
                 <div className="input-actions-left">
-                  <button className="icon-btn">
+                  <button className="icon-button">
                     <Paperclip size={20} />
                   </button>
-                  <button className="icon-btn">
+                  <button className="icon-button">
                     <Image size={20} />
                   </button>
-                  <button className="icon-btn">
-                    <Camera size={20} />
-                  </button>
                 </div>
-                <div className="message-input-wrapper">
-                  <textarea
-                    ref={messageInputRef}
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type a message..."
-                    rows={1}
-                  />
-                  <div className="input-formatting">
-                    <button className="format-btn"><Bold size={14} /></button>
-                    <button className="format-btn"><Italic size={14} /></button>
-                    <button className="format-btn"><Code size={14} /></button>
-                  </div>
-                </div>
+                <textarea
+                  ref={messageInputRef}
+                  className="message-input"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type a message..."
+                  rows={1}
+                />
                 <div className="input-actions-right">
-                  <button 
-                    className="icon-btn"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  >
+                  <button className="icon-button">
                     <Smile size={20} />
                   </button>
-                  <button 
-                    className={`icon-btn voice-btn ${isRecording ? 'recording' : ''}`}
-                    onClick={handleVoiceRecording}
-                  >
-                    {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-                    {isRecording && <span className="recording-time">{recordingTime}s</span>}
+                  <button className="icon-button">
+                    <Mic size={20} />
                   </button>
-                  <button 
-                    className="send-btn"
+                  <button
+                    className="send-button"
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim()}
                   >
-                    <Send size={20} />
+                    <Send size={18} />
                   </button>
                 </div>
               </div>
@@ -679,16 +513,18 @@ function App() {
           </>
         ) : (
           <div className="welcome-screen">
-            <div className="welcome-content">
-              <MessageCircle size={64} />
-              <h2>Welcome to Messenger</h2>
-              <p>Select a conversation to start messaging</p>
+            <div className="welcome-content fade-in">
+              <MessageCircle size={64} className="welcome-icon" />
+              <h1 className="welcome-title">Welcome to Messenger</h1>
+              <p className="welcome-subtitle">
+                Select a conversation to start messaging with your friends and colleagues.
+              </p>
               <div className="welcome-stats">
-                <div className="stat">
-                  <span className="stat-number">{Object.keys(chats).length}</span>
+                <div className="stat-item">
+                  <span className="stat-number">{chats.length}</span>
                   <span className="stat-label">Conversations</span>
                 </div>
-                <div className="stat">
+                <div className="stat-item">
                   <span className="stat-number">{totalUnread}</span>
                   <span className="stat-label">Unread</span>
                 </div>
@@ -697,79 +533,6 @@ function App() {
           </div>
         )}
       </div>
-
-      {/* Chat Info Sidebar */}
-      {showChatInfo && currentChatData && (
-        <div className="chat-info-sidebar">
-          <div className="chat-info-header">
-            <h3>Chat Info</h3>
-            <button onClick={() => setShowChatInfo(false)}>
-              <X size={20} />
-            </button>
-          </div>
-          <div className="chat-info-content">
-            <div className="chat-profile">
-              <img src={currentChatData.avatar} alt={currentChatData.name} />
-              <h4>{currentChatData.name}</h4>
-              <p>Online</p>
-            </div>
-            <div className="chat-actions-grid">
-              <button className="action-btn">
-                <Phone size={20} />
-                <span>Call</span>
-              </button>
-              <button className="action-btn">
-                <Video size={20} />
-                <span>Video</span>
-              </button>
-              <button className="action-btn">
-                <Bell size={20} />
-                <span>Mute</span>
-              </button>
-              <button className="action-btn">
-                <Star size={20} />
-                <span>Favorite</span>
-              </button>
-            </div>
-            <div className="chat-options">
-              <div className="option-item">
-                <Shield size={20} />
-                <span>Privacy & Support</span>
-                <ChevronRight size={16} />
-              </div>
-              <div className="option-item">
-                <Image size={20} />
-                <span>Media & Files</span>
-                <ChevronRight size={16} />
-              </div>
-              <div className="option-item">
-                <Archive size={20} />
-                <span>Archive Chat</span>
-                <ChevronRight size={16} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Emoji Picker */}
-      {showEmojiPicker && (
-        <div className="emoji-picker">
-          <div className="emoji-grid">
-            {['😀', '😂', '😍', '🥰', '😊', '😎', '🤔', '😴', '😢', '😡', '👍', '👎', '❤️', '🔥', '💯', '🎉'].map(emoji => (
-              <button
-                key={emoji}
-                onClick={() => {
-                  setNewMessage(prev => prev + emoji);
-                  setShowEmojiPicker(false);
-                }}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
